@@ -1,11 +1,11 @@
 #!/bin/bash
 
-echo "🚀 Cleaning up older containers..."
+echo "🚀 Spinning down and wiping legacy containers..."
 docker stop $(docker ps -aq) 2>/dev/null
 docker rm $(docker ps -aq) 2>/dev/null
 
-echo "📱 Starting ReDroid with Software Rendering & Lock Bypass..."
-# We pass explicit configurations to strip out standard hardware rendering and unlock constraints
+echo "📱 Starting ReDroid (Android 11 Machine Layer)..."
+# We boot Android with explicit parameters forcing custom software layouts
 docker run -d --privileged \
   --name=redroid \
   -p 5555:5555 \
@@ -17,14 +17,16 @@ docker run -d --privileged \
   ro.lockscreen.disable.default=true \
   persist.sys.disable_screen_lock=true
 
-echo "⏳ Waiting 12 seconds for the software display rendering matrix to settle..."
+echo "⏳ Giving the Android core framework 12 seconds to stabilize..."
 sleep 12
 
-echo "🌐 Launching the ws-scrcpy Web UI..."
+echo "⚡ Deploying huonwe/webscreen over WebRTC..."
+# We connect directly to the active ADB loop on port 5555 and map the web server out to 7860
 docker run -d \
-  --name=scrcpy-web \
+  --name=webscreen \
   --link redroid:redroid \
   -p 7860:8000 \
-  lucasbento/ws-scrcpy:latest
+  huonwe/webscreen:latest \
+  --adb-server redroid:5555
 
-echo "✅ Optimization applied! Re-verify port 7860."
+echo "✅ WebRTC Streaming Stack Is Live! Adjusting Ports..."
